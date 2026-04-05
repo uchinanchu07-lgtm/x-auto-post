@@ -24,11 +24,13 @@ jobs:
         run: npm ci
 
       - name: Write Google OAuth tokens
+        env:
+          GOOGLE_TOKENS_JSON: ${{ secrets.GOOGLE_TOKENS_JSON }}
         run: |
           mkdir -p credentials
-          echo '${{ secrets.GOOGLE_TOKENS_JSON }}' > credentials/tokens.json
+          echo "$GOOGLE_TOKENS_JSON" > credentials/tokens.json
 
-      - name: Run scheduler (once)
+      - name: Create .env file
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
@@ -39,4 +41,16 @@ jobs:
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           X_HANDLE: ${{ secrets.X_HANDLE }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env
+          echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env
+          echo "SPREADSHEET_ID=$SPREADSHEET_ID" >> .env
+          echo "X_API_KEY=$X_API_KEY" >> .env
+          echo "X_API_KEY_SECRET=$X_API_KEY_SECRET" >> .env
+          echo "X_ACCESS_TOKEN=$X_ACCESS_TOKEN" >> .env
+          echo "X_ACCESS_TOKEN_SECRET=$X_ACCESS_TOKEN_SECRET" >> .env
+          echo "X_HANDLE=$X_HANDLE" >> .env
+          echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> .env
+
+      - name: Run scheduler (once)
         run: node tools/schedule.mjs --once
