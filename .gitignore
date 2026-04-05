@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+!.env.example
+credentials/
+profile/profile.json
+.claude/settings.local.json
+dist/
+.DS_Store

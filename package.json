@@ -1,0 +1,26 @@
+{
+  "name": "x-auto-post",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "X（Twitter）運用自動化システム",
+  "scripts": {
+    "auth:google": "node auth-google.mjs",
+    "init-sheet": "node tools/init-spreadsheet.mjs",
+    "generate": "node tools/generate-posts.mjs",
+    "post": "node tools/post-to-x.mjs",
+    "schedule": "node tools/schedule.mjs",
+    "test:x": "node tools/post-to-x.mjs --dry-run",
+    "profile": "node profile/generate-profile.mjs",
+    "profile:interactive": "node profile/generate-profile-interactive.mjs",
+    "review": "node tools/review-performance.mjs",
+    "dist": "node tools/build-dist.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.0",
+    "googleapis": "^148.0.0",
+    "node-cron": "^3.0.3",
+    "open": "^11.0.0",
+    "twitter-api-v2": "^1.19.0"
+  }
+}

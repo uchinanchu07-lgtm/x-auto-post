@@ -1,0 +1,23 @@
+{
+  "handle": "@your_handle",
+  "tone": "あなたの口調の特徴を記述（例: カジュアルな口語体、丁寧語ベース、etc.）",
+  "target": "ターゲット層（例: エンジニア、経営者、副業志向の人材）",
+  "credential": "あなたの実績や数字（例: 月商1000万円、顧客50社、etc.）",
+  "positioning": "何の専門家として見られたいか",
+  "values": "繰り返し語っているテーマや信念",
+  "rules": [
+    "ルール1: 口調に関するルール",
+    "ルール2: コンテンツに関するルール",
+    "ルール3: ブランディングに関するルール"
+  ],
+  "top_patterns": "過去に伸びた投稿の共通パターン（generate-profile.mjs で自動生成される）",
+  "ng_expressions": [
+    "使ってはいけない表現1",
+    "使ってはいけない表現2"
+  ],
+  "stats": {
+    "total_posts": 0,
+    "avg_impressions": 0,
+    "top_post_impressions": 0
+  }
+}
