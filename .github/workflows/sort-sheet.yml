@@ -1,0 +1,56 @@
+name: Daily Sort Sheet
+
+on:
+  schedule:
+    # 毎日 JST 07:00 (UTC 22:00 前日)
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+    # 手動実行も可能
+
+jobs:
+  sort:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write Google OAuth tokens
+        env:
+          GOOGLE_TOKENS_JSON: ${{ secrets.GOOGLE_TOKENS_JSON }}
+        run: |
+          mkdir -p credentials
+          echo "$GOOGLE_TOKENS_JSON" > credentials/tokens.json
+
+      - name: Create .env file
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_KEY_SECRET: ${{ secrets.X_API_KEY_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          X_HANDLE: ${{ secrets.X_HANDLE }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env
+          echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env
+          echo "SPREADSHEET_ID=$SPREADSHEET_ID" >> .env
+          echo "X_API_KEY=$X_API_KEY" >> .env
+          echo "X_API_KEY_SECRET=$X_API_KEY_SECRET" >> .env
+          echo "X_ACCESS_TOKEN=$X_ACCESS_TOKEN" >> .env
+          echo "X_ACCESS_TOKEN_SECRET=$X_ACCESS_TOKEN_SECRET" >> .env
+          echo "X_HANDLE=$X_HANDLE" >> .env
+          echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> .env
+
+      - name: Sort spreadsheet
+        run: node tools/sort-sheet.mjs
