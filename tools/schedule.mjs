@@ -64,7 +64,7 @@ async function checkAndPost() {
     const scheduledStr = row[dateCol];
     if (!scheduledStr) continue;
 
-    const scheduled = new Date(scheduledStr);
+    const scheduled = new Date(scheduledStr.replace(/\//g, '-').replace(' ', 'T') + '+09:00');
     if (isNaN(scheduled.getTime())) continue;
     if (scheduled > now) continue;
 
