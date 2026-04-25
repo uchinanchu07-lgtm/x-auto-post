@@ -2,8 +2,8 @@ name: X Auto Post Scheduler
 
 on:
   schedule:
-    # 5分ごとにチェック（GitHub Actions の最小間隔）
-    - cron: '*/5 * * * *'
+    - cron: '0 22 * * *'   # 毎日 07:00 JST（UTC+9 → UTC 22:00 前日）
+    - cron: '0 10 * * *'   # 毎日 19:00 JST（UTC+9 → UTC 10:00）
   workflow_dispatch:
     # 手動でも実行できるようにする（テスト用）
 
