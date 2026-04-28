@@ -1,11 +1,12 @@
 /**
  * sheets.mjs — Google Sheets 認証・接続ヘルパー
  *
+ * 認証方式（優先順）:
+ *   1. サービスアカウント: credentials/service-account.json が存在する場合
+ *   2. OAuth2: credentials/tokens.json + .env の GOOGLE_CLIENT_ID/SECRET
+ *
  * 必須 .env:
  *   SPREADSHEET_ID
- *   GOOGLE_CLIENT_ID
- *   GOOGLE_CLIENT_SECRET
- *   GOOGLE_TOKENS_PATH (デフォルト: ./credentials/tokens.json)
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -15,20 +16,32 @@ import { google } from "googleapis";
 import dotenv from "dotenv";
 
 export const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-dotenv.config({ path: join(PROJECT_ROOT, ".env") });
+dotenv.config({ path: join(PROJECT_ROOT, ".env"), override: true });
 
 export let SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 export const SHEET_NAME = process.env.SHEET_NAME || "投稿管理";
 
+const SERVICE_ACCOUNT_PATH = join(PROJECT_ROOT, "credentials", "service-account.json");
 const TOKENS_PATH =
   process.env.GOOGLE_TOKENS_PATH || join(PROJECT_ROOT, "credentials", "tokens.json");
 
 /**
- * Google OAuth2 クライアントを返す（SPREADSHEET_ID 不要）
+ * 認証クライアントを返す
+ * サービスアカウントが存在すればそちらを優先、なければ OAuth2 にフォールバック
  */
 export function getAuthClient() {
+  // --- サービスアカウント優先 ---
+  if (existsSync(SERVICE_ACCOUNT_PATH)) {
+    const key = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf-8"));
+    return new google.auth.GoogleAuth({
+      credentials: key,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
+  }
+
+  // --- OAuth2 フォールバック ---
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    console.error("Error: GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET not set in .env");
+    console.error("Error: credentials/service-account.json も GOOGLE_CLIENT_ID/SECRET も見つかりません");
     process.exit(1);
   }
   if (!existsSync(TOKENS_PATH)) {
@@ -55,8 +68,10 @@ export async function getSheets() {
     process.exit(1);
   }
 
-  const client = getAuthClient();
-  _sheets = google.sheets({ version: "v4", auth: client });
+  const auth = getAuthClient();
+  // GoogleAuth はgetClient()が必要、OAuth2クライアントはそのまま使える
+  const authClient = typeof auth.getClient === "function" ? await auth.getClient() : auth;
+  _sheets = google.sheets({ version: "v4", auth: authClient });
   return _sheets;
 }
 
