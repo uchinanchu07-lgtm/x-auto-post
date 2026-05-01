@@ -39,6 +39,9 @@ jobs:
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           X_HANDLE: ${{ secrets.X_HANDLE }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          THREADS_HANDLE: ${{ secrets.THREADS_HANDLE }}
         run: |
           echo "SPREADSHEET_ID=$SPREADSHEET_ID" >> .env
           echo "X_API_KEY=$X_API_KEY" >> .env
@@ -47,6 +50,9 @@ jobs:
           echo "X_ACCESS_TOKEN_SECRET=$X_ACCESS_TOKEN_SECRET" >> .env
           echo "X_HANDLE=$X_HANDLE" >> .env
           echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> .env
+          echo "THREADS_ACCESS_TOKEN=$THREADS_ACCESS_TOKEN" >> .env
+          echo "THREADS_USER_ID=$THREADS_USER_ID" >> .env
+          echo "THREADS_HANDLE=$THREADS_HANDLE" >> .env
 
       - name: Run scheduler (once)
         run: node tools/schedule.mjs --once
