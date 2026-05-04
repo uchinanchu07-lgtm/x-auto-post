@@ -1,11 +1,11 @@
 name: X Auto Post Scheduler
 
 on:
+  repository_dispatch:
+    types: [post-scheduled]  # cron-job.org から叩かれたら起動
   schedule:
-    - cron: '0 22 * * *'   # 毎日 07:00 JST（UTC+9 → UTC 22:00 前日）
-    - cron: '30 22 * * *'  # 毎日 07:30 JST（07:00 未実行時のリトライ）
-    - cron: '0 10 * * *'   # 毎日 19:00 JST（UTC+9 → UTC 10:00）
-    - cron: '30 10 * * *'  # 毎日 19:30 JST（19:00 未実行時のリトライ）
+    - cron: '0 22 * * *'   # 毎日 07:00 JST（UTC+9 → UTC 22:00 前日）fallback
+    - cron: '0 10 * * *'   # 毎日 19:00 JST（UTC+9 → UTC 10:00）fallback
   workflow_dispatch:
     # 手動でも実行できるようにする（テスト用）
 
