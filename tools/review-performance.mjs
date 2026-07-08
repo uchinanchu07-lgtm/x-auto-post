@@ -21,7 +21,7 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-dotenv.config({ path: join(PROJECT_ROOT, ".env") });
+dotenv.config({ path: join(PROJECT_ROOT, ".env"), override: true });
 
 const PROFILE_PATH = join(PROJECT_ROOT, "profile", "profile.json");
 const PERF_SHEET = "パフォーマンス";

@@ -19,7 +19,7 @@ import dotenv from "dotenv";
 import { ensureSheet, writeSheet } from "../tools/lib/sheets.mjs";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-dotenv.config({ path: join(PROJECT_ROOT, ".env") });
+dotenv.config({ path: join(PROJECT_ROOT, ".env"), override: true });
 
 const PROFILE_PATH = join(PROJECT_ROOT, "profile", "profile.json");
 const PROFILE_SHEET = "プロファイル";

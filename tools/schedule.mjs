@@ -20,7 +20,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-dotenv.config({ path: join(PROJECT_ROOT, ".env") });
+dotenv.config({ path: join(PROJECT_ROOT, ".env"), override: true });
 
 const HANDLE = process.env.X_HANDLE;
 if (!HANDLE) {
@@ -28,6 +28,25 @@ if (!HANDLE) {
   process.exit(1);
 }
 const THREAD_SEPARATOR = "---";
+
+/**
+ * スプシの投稿予定日時を JST として安全にパースする。
+ * 正常形式: "2026/04/16 07:30"
+ * 異常形式: "2026/4/8/7:30", "2026/04/16 /07:30", "2026/04/17/ 19:00" なども許容。
+ */
+function parseJstDate(str) {
+  if (!str) return null;
+  // 日付部分(YYYY/M/D)と時刻部分(H:mm)を、スラッシュ・スペースの混在を無視して抽出
+  const match = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})[\s/]+(\d{1,2}):(\d{2})$/);
+  if (match) {
+    const [, y, mo, dd, h, mi] = match;
+    return new Date(
+      `${y}-${mo.padStart(2, "0")}-${dd.padStart(2, "0")}T${h.padStart(2, "0")}:${mi}:00+09:00`
+    );
+  }
+  // フォールバック（元のロジック）
+  return new Date(str.replace(/\//g, "-").replace(" ", "T") + "+09:00");
+}
 
 function getClient() {
   const { X_API_KEY, X_API_KEY_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET } = process.env;
@@ -64,8 +83,8 @@ async function checkAndPost() {
     const scheduledStr = row[dateCol];
     if (!scheduledStr) continue;
 
-    const scheduled = new Date(scheduledStr.replace(/\//g, '-').replace(' ', 'T') + '+09:00');
-    if (isNaN(scheduled.getTime())) continue;
+    const scheduled = parseJstDate(scheduledStr);
+    if (!scheduled || isNaN(scheduled.getTime())) continue;
     if (scheduled > now) continue;
 
     const id = row[idCol];
@@ -126,7 +145,11 @@ async function checkAndPost() {
       }
 
       if (remarks.length > 0) {
-        await updateRange(SHEET_NAME, `H${rowIndex}`, [[remarks.join(" | ")]]);
+        try {
+          await updateRange(SHEET_NAME, `H${rowIndex}`, [[remarks.join(" | ")]]);
+        } catch (remarkErr) {
+          console.error(`  → 備考書き込み失敗: ${remarkErr.message}`);
+        }
       }
 
       posted++;
@@ -134,9 +157,13 @@ async function checkAndPost() {
       await new Promise((r) => setTimeout(r, 3000));
     } catch (err) {
       const errorMsg = err.message || String(err);
-      await updateRange(SHEET_NAME, `B${rowIndex}`, [["エラー"]]);
-      await updateRange(SHEET_NAME, `H${rowIndex}`, [[errorMsg.slice(0, 200)]]);
-      console.error(`  → エラー: ${errorMsg}`);
+      console.error(`  → エラー (ID ${id}): ${errorMsg}`);
+      try {
+        await updateRange(SHEET_NAME, `B${rowIndex}`, [["エラー"]]);
+        await updateRange(SHEET_NAME, `H${rowIndex}`, [[errorMsg.slice(0, 200)]]);
+      } catch (sheetErr) {
+        console.error(`  → スプシ更新失敗: ${sheetErr.message}`);
+      }
     }
   }
 

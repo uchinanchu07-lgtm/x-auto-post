@@ -7,6 +7,7 @@
  *   node tools/generate-posts.mjs              # 7日分（デフォルト）生成
  *   node tools/generate-posts.mjs --days 14    # 14日分生成
  *   node tools/generate-posts.mjs --count 5    # 5件生成
+ *   node tools/generate-posts.mjs --count 10 --theme "時事ネタ"  # テーマ指定
  */
 
 import { readFileSync, existsSync } from "fs";
@@ -17,7 +18,7 @@ import dotenv from "dotenv";
 import { readSheet, addPost } from "./lib/sheets.mjs";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-dotenv.config({ path: join(PROJECT_ROOT, ".env") });
+dotenv.config({ path: join(PROJECT_ROOT, ".env"), override: true });
 
 const PROFILE_PATH = join(PROJECT_ROOT, "profile", "profile.json");
 const SETTINGS_SHEET = "設定";
@@ -26,6 +27,8 @@ function parseArgs() {
   const args = process.argv.slice(2);
   let count = null;
   let days = 7;
+
+  let theme = null;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--days" && args[i + 1]) {
@@ -36,9 +39,13 @@ function parseArgs() {
       count = parseInt(args[i + 1], 10);
       i++;
     }
+    if (args[i] === "--theme" && args[i + 1]) {
+      theme = args[i + 1];
+      i++;
+    }
   }
 
-  return { count, days };
+  return { count, days, theme };
 }
 
 async function getSettings() {
@@ -56,15 +63,19 @@ async function getSettings() {
   }
 }
 
-async function generatePosts(profile, count) {
+async function generatePosts(profile, count, theme = null) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const themeInstruction = theme
+    ? `\n## テーマ指定\n\n以下のテーマに沿った投稿を生成してください：\n**${theme}**\n`
+    : "";
 
   const prompt = `あなたは以下のプロファイルを持つ X（Twitter）アカウントの AI分身です。このプロファイルに完全に従って投稿文を生成してください。
 
 ## プロファイル
 
 ${JSON.stringify(profile, null, 2)}
-
+${themeInstruction}
 ## 指示
 
 ${count}件の投稿文を生成してください。
@@ -81,6 +92,9 @@ ${count}件の投稿文を生成してください。
 - 関西弁は使わない。標準語ベースのカジュアルな口語体で書くこと
 - 感嘆符を3つ以上連続で使わない
 - AIっぽい定型表現（「〜という観点で」「〜は重要です」等）は使わない
+- 断定口調（「〜だ」「〜である」「〜が必要」「〜て当然」「〜じゃない」で言い切る形）は使わない
+- 語尾は「〜かもしれません」「〜と思います」「〜ではないでしょうか」「〜なんです」「〜ですよね」など、柔らかく受け取りやすい表現にすること
+- メンタルが弱っている人が読んでも傷つかない、寄り添う口調で書くこと
 
 ### 出力形式
 
@@ -119,17 +133,18 @@ async function main() {
     process.exit(1);
   }
 
-  const { count: argCount, days } = parseArgs();
+  const { count: argCount, days, theme } = parseArgs();
   const settings = await getSettings();
 
   const postsPerDay = parseInt(settings["投稿頻度"] || "1", 10);
   const totalCount = argCount || days * postsPerDay;
 
-  console.log(`生成設定: ${totalCount}件（${days}日分 x ${postsPerDay}回/日）`);
+  const themeLabel = theme ? `【${theme}】` : "";
+  console.log(`生成設定: ${totalCount}件（${days}日分 x ${postsPerDay}回/日）${themeLabel}`);
   console.log("");
 
   const profile = JSON.parse(readFileSync(PROFILE_PATH, "utf-8"));
-  const posts = await generatePosts(profile, totalCount);
+  const posts = await generatePosts(profile, totalCount, theme);
 
   console.log(`${posts.length} 件の投稿が生成されました`);
   console.log("");

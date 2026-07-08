@@ -23,7 +23,7 @@ import dotenv from "dotenv";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = join(__dirname, ".env");
-dotenv.config({ path: ENV_PATH });
+dotenv.config({ path: ENV_PATH, override: true });
 
 const REDIRECT_PORT = 3002;
 const REDIRECT_URI = process.env.THREADS_REDIRECT_URI || `http://localhost:${REDIRECT_PORT}/callback`;

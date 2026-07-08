@@ -21,7 +21,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-dotenv.config({ path: join(PROJECT_ROOT, ".env") });
+dotenv.config({ path: join(PROJECT_ROOT, ".env"), override: true });
 
 const HANDLE = process.env.X_HANDLE;
 if (!HANDLE) {
@@ -170,13 +170,21 @@ async function main() {
       }
 
       if (remarks.length > 0) {
-        await updateRange(SHEET_NAME, `H${rowIndex}`, [[remarks.join(" | ")]]);
+        try {
+          await updateRange(SHEET_NAME, `H${rowIndex}`, [[remarks.join(" | ")]]);
+        } catch (remarkErr) {
+          console.error(`  → 備考書き込み失敗: ${remarkErr.message}`);
+        }
       }
     } catch (err) {
       const errorMsg = err.message || String(err);
-      await updateRange(SHEET_NAME, `B${rowIndex}`, [["エラー"]]);
-      await updateRange(SHEET_NAME, `H${rowIndex}`, [[errorMsg.slice(0, 200)]]);
-      console.error(`  → エラー: ${errorMsg}`);
+      console.error(`  → エラー (ID ${id}): ${errorMsg}`);
+      try {
+        await updateRange(SHEET_NAME, `B${rowIndex}`, [["エラー"]]);
+        await updateRange(SHEET_NAME, `H${rowIndex}`, [[errorMsg.slice(0, 200)]]);
+      } catch (sheetErr) {
+        console.error(`  → スプシ更新失敗: ${sheetErr.message}`);
+      }
     }
 
     if (targets.length > 1) {

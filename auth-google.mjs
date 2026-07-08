@@ -16,7 +16,7 @@ import dotenv from "dotenv";
 import { google } from "googleapis";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, ".env") });
+dotenv.config({ path: join(__dirname, ".env"), override: true });
 
 const CREDENTIALS_DIR = join(__dirname, "credentials");
 const TOKENS_PATH = process.env.GOOGLE_TOKENS_PATH || join(CREDENTIALS_DIR, "tokens.json");
