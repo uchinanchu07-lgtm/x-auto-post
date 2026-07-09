@@ -178,10 +178,13 @@ async function main() {
       }
     } catch (err) {
       const errorMsg = err.message || String(err);
+      const errorDetail = err.data ? JSON.stringify(err.data) : "";
       console.error(`  → エラー (ID ${id}): ${errorMsg}`);
+      if (errorDetail) console.error(`  → 詳細: ${errorDetail}`);
       try {
         await updateRange(SHEET_NAME, `B${rowIndex}`, [["エラー"]]);
-        await updateRange(SHEET_NAME, `H${rowIndex}`, [[errorMsg.slice(0, 200)]]);
+        const remark = errorDetail ? `${errorMsg} | ${errorDetail}` : errorMsg;
+        await updateRange(SHEET_NAME, `H${rowIndex}`, [[remark.slice(0, 500)]]);
       } catch (sheetErr) {
         console.error(`  → スプシ更新失敗: ${sheetErr.message}`);
       }
