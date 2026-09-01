@@ -1,0 +1,43 @@
+name: Refresh Threads Token
+
+# Threads の長期アクセストークンは 60 日で失効する。
+# 期限内であれば th_refresh_token で 60 日延長できるため、
+# 毎週リフレッシュして THREADS_ACCESS_TOKEN secret を更新し続ける。
+#
+# 必要な secret:
+#   GH_PAT — Fine-grained PAT（このリポジトリの "Secrets: Read and write" 権限）
+#   THREADS_ACCESS_TOKEN — 現在の長期トークン
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # 毎週月曜 12:00 JST
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Refresh long-lived token and update secret
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          CURRENT_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          resp=$(curl -sS "https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token=${CURRENT_TOKEN}")
+
+          new_token=$(echo "$resp" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('access_token',''))")
+          expires_in=$(echo "$resp" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('expires_in',''))")
+
+          if [ -z "$new_token" ]; then
+            echo "::error::Refresh failed: $resp"
+            exit 1
+          fi
+
+          days=$(( ${expires_in:-0} / 86400 ))
+          echo "New token acquired. Valid for ~${days} days (expires_in=${expires_in})." >> "$GITHUB_STEP_SUMMARY"
+
+          gh secret set THREADS_ACCESS_TOKEN --repo "$GITHUB_REPOSITORY" --body "$new_token"
+          echo "THREADS_ACCESS_TOKEN secret updated." >> "$GITHUB_STEP_SUMMARY"
