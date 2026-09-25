@@ -90,6 +90,7 @@ async function main() {
   const statusCol = headerRow.indexOf("ステータス");
   const textCol = headerRow.indexOf("投稿文");
   const idCol = headerRow.indexOf("ID");
+  const threadsTextCol = headerRow.indexOf("Threads文");
 
   const approved = [];
   for (let i = 1; i < rows.length; i++) {
@@ -153,11 +154,17 @@ async function main() {
       // --- Threads 投稿（認証情報がある場合） ---
       if (threadsConfig) {
         try {
+          const threadsSource =
+            threadsTextCol >= 0 && row[threadsTextCol] && row[threadsTextCol].trim()
+              ? row[threadsTextCol]
+              : text;
+          const threadsParts = parseThreadParts(threadsSource);
+          const isThreadsThread = threadsParts.length > 1;
           let threadsPostId;
-          if (isThread) {
-            threadsPostId = await postThreadChainToThreads(threadsConfig.userId, threadsConfig.token, parts);
+          if (isThreadsThread) {
+            threadsPostId = await postThreadChainToThreads(threadsConfig.userId, threadsConfig.token, threadsParts);
           } else {
-            threadsPostId = await postSingleToThreads(threadsConfig.userId, threadsConfig.token, text);
+            threadsPostId = await postSingleToThreads(threadsConfig.userId, threadsConfig.token, threadsSource);
           }
           const threadsLink = buildThreadsUrl(threadsConfig.handle, threadsPostId);
           remarks.push(`Threads: ${threadsLink}`);

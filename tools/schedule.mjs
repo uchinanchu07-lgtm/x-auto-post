@@ -72,6 +72,7 @@ async function checkAndPost() {
   const dateCol = headerRow.indexOf("投稿予定日時");
   const textCol = headerRow.indexOf("投稿文");
   const idCol = headerRow.indexOf("ID");
+  const threadsTextCol = headerRow.indexOf("Threads文");
 
   const client = getClient();
   let posted = 0;
@@ -128,11 +129,17 @@ async function checkAndPost() {
       const threadsConfig = getThreadsConfig();
       if (threadsConfig) {
         try {
+          const threadsSource =
+            threadsTextCol >= 0 && row[threadsTextCol] && row[threadsTextCol].trim()
+              ? row[threadsTextCol]
+              : text;
+          const threadsParts = threadsSource.split(THREAD_SEPARATOR).map((s) => s.trim()).filter((s) => s.length > 0);
+          const isThreadsThread = threadsParts.length > 1;
           let threadsPostId;
-          if (isThread) {
-            threadsPostId = await postThreadChainToThreads(threadsConfig.userId, threadsConfig.token, parts);
+          if (isThreadsThread) {
+            threadsPostId = await postThreadChainToThreads(threadsConfig.userId, threadsConfig.token, threadsParts);
           } else {
-            threadsPostId = await postSingleToThreads(threadsConfig.userId, threadsConfig.token, text);
+            threadsPostId = await postSingleToThreads(threadsConfig.userId, threadsConfig.token, threadsSource);
           }
           const threadsLink = buildThreadsUrl(threadsConfig.handle, threadsPostId);
           remarks.push(`Threads: ${threadsLink}`);

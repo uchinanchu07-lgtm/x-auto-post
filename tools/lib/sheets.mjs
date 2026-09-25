@@ -120,7 +120,7 @@ export async function ensureSheet(sheetName) {
 /**
  * シートの全データを読み取る（ヘッダー含む）
  */
-export async function readSheet(sheetName, range = "A:H") {
+export async function readSheet(sheetName, range = "A:I") {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -137,7 +137,7 @@ export async function appendRows(sheetName, rows) {
   const sheets = await getSheets();
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${sheetName}'!A:H`,
+    range: `'${sheetName}'!A:I`,
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: rows },
@@ -166,6 +166,7 @@ export async function updateRange(sheetName, range, values) {
  * @param {string} opts.status - ステータス（デフォルト: "下書き"）
  * @param {string} opts.scheduledAt - 投稿予定日時を明示指定する場合（省略で自動割当）
  * @param {string} opts.note - 備考
+ * @param {string} opts.threadsText - Threads用の別文面（省略時はXと同じ文面がThreadsにも使われる）
  * @returns {{ id: number, scheduledAt: string }} 追加された行の情報
  */
 export async function addPost(text, opts = {}) {
@@ -188,6 +189,7 @@ export async function addPost(text, opts = {}) {
     "", // 投稿リンク
     "", // 投稿日時
     opts.note || "",
+    opts.threadsText || "", // Threads文（空ならXと同じ文面を使う）
   ];
 
   await appendRows(sheetName, [row]);
