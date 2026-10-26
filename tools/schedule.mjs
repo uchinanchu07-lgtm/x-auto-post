@@ -95,6 +95,9 @@ async function checkAndPost() {
     const jstNow = () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
     console.log(`[${jstNow()}] 投稿中: ID ${id}`);
 
+    // 他の実行（GitHub / PC）が同じ行を二重に投稿しないよう、投稿前に印を付ける
+    await updateRange(SHEET_NAME, `B${rowIndex}`, [["投稿中"]]);
+
     try {
       const parts = text.split(THREAD_SEPARATOR).map((s) => s.trim()).filter((s) => s.length > 0);
       const isThread = parts.length > 1;

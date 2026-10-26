@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
     # 手動でも実行できるようにする（テスト用）
 
+concurrency:
+  group: auto-post
+  cancel-in-progress: false
+
 jobs:
   post:
     runs-on: ubuntu-latest
